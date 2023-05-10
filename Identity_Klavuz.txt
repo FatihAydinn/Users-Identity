@@ -1,0 +1,154 @@
+ASP.NET Core Web App (MVC) ile yeni bir proje oluşturulur.
+Authentication type : Individual Accounts
+
+-İçerik şablonu için;
+Areas > Identity > New Scaffolded > Identity
+
+-Models klasörü içerisine CustomUser adında bir klasör oluşuturlur ve Attribute ile tercihler eklenir.
+-Oluşturulan class IdentityUser'dan kalıtım almalıdır.
+-Bu modelde eklenecek olan değerler halihazırda var olan veritabanına eklenir. Yeni bir veritabanı oluşmaz.
+
+	[Display(Name ="Ad Soyad")]
+        public string FullName { get; set; }
+
+        [Display(Name = "Adres")]
+        public string Adress { get; set; }
+
+        [Display(Name = "Cinsiyet")]
+        public string Gender { get; set; }
+
+        [Display(Name = "Doğum Tarihi")]
+        [DataType(DataType.DateTime)]
+        public DateTime DateOfBirth { get; set; }
+
+---------------------------------------------------------------------------------------------------------------------------------------------------
+
+-Data klasörü içerisinde bulunan ApplicationDbContext'e oluşuturlan Custom modeli eklenmeli.
+
+	Kalıtım alınan IdentityDbContext<CustomUser> olarak Generic şekilde ekleme yapılmalı.
+
+
+-Program.cs tarafında kullanılan IdentityUser'ı mevcut olarak kullanılacak model ile değiştirilir.
+
+	AddDefaultIdentity<CustomUser>
+
+
+-Yapılan değişiklikleri uygulanması için migration yapılmalı.
+
+	Package Manager Console > add-migration MigrationName > update-database
+
+Rol bazlı yetkilendirmek için;
+-Program.cs içerisinde RequireConfirmedAccount'tan sonra eklenecek kod;
+
+	.AddRoles<IdentityRole>()
+
+-Program.cs içerisinde app.UseAuthorization() kodunun üzerine app.UseAuthentication() kodu eklenmelidir.
+
+---------------------------------------------------------------------------------------------------------------------------------------------------
+
+-LoginPartial.cshtml içerisinde bulunan tüm IdentityUser değerlerini CustomUser'a çevirilmeli.
+-Register.cshtml.cs ve diğer tüm cshtml.cs uzantılı dökümanların içerisinde bulunan tüm IdentityUser değerlerini CustomUser'a çevirilmeli.
+
+---------------------------------------------------------------------------------------------------------------------------------------------------
+-Register.cshtml.cs içerisinde buluna InputModel içerisine Attributelar tanımlanmalıdır.
+
+	public class InputModel
+        {
+
+            [Required]
+            [Display(Name = "Üyelik Tipi")]
+            public string Role { get; set; }
+
+            [Required]
+            [Display(Name = "Kullanıcı Adı")]
+            public string UserName { get; set; }
+
+            [Required]
+            [Display(Name = "Adı & Soyadı")]
+            public string FullName { get; set; }
+
+            [Required]
+            [EmailAddress]
+            [Display(Name = "Email")]
+            public string Email { get; set; }
+
+            [Required]
+            [Display(Name = "Cinsiyet")]
+            public string Gender { get; set; }
+
+            [Required]
+            [Display(Name = "Adres")]
+            public string Address { get; set; }
+
+            [Required]
+            [Display(Name = "Doğum Tarihi")]
+            public DateTime DateOfBirth { get; set; }
+
+            [Required]
+            [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+            [DataType(DataType.Password)]
+            [Display(Name = "Password")]
+            public string Password { get; set; }
+
+            [DataType(DataType.Password)]
+            [Display(Name = "Confirm password")]
+            [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
+            public string ConfirmPassword { get; set; }
+        }
+
+-Register.cshtml içerisinde eksik olan ek elemanları InputModele uygun şekilde form içerisine eklenir.
+
+-Register.cshtml.cs içerisinde var user = CreateUser(); olan yere eklenecek kod;
+	var user = new CustomUser { UserName = Input.UserName, Email = Input.Email, FullName = Input.FullName, Adress = Input.Adress, Gender = Input.Gender, DateOfBirth = Input.DateOfBirth };
+---------------------------------------------------------------------------------------------------------------------------------------------------
+
+-Veritabanında bulunan AspNetRoles tablosuna User ve Admin olmak üzere 2 adet kolon (User ve Admin) manuel olarak eklenir.
+
+-Kaydı yapılan verinin rolünü veritabanına kaydetmek için Register.cshtml.cs içerisinde "var result" altına eklenecek ve değiştirilecek kodlar;
+
+	var addRoleToUser = await _userManager.AddToRoleAsync(user, Input.Role);
+        if (result.Succeeded && addRoleToUser.Succeeded)
+---------------------------------------------------------------------------------------------------------------------------------------------------
+
+Eposta onayını gerçekten mail yoluyla onaylamak için;
+
+-RegisterConfirmation.cshtml.cs içerisinde blulunan
+	DisplayConfirmAccountLink = true kodunu "false" olacak şekilde değiştirilir.
+
+Register.cshtml.cs içerisine CreateUser metodunun üzerine eklenecek kod bloğu;
+-Gönderilecek eposta hesabının hesap bilgileri,port,host bilgileri bulunuyor.
+
+        private async Task<bool> SendEmailAsync(string email, string subject, string confirmLink){
+		try
+            {
+
+            MailMessage message = new MailMessage();
+            SmtpClient smtpClient = new SmtpClient();
+            message.From = new MailAddress("albertookey@outlook.com");
+            message.To.Add(email);
+            message.Subject = subject;
+            message.IsBodyHtml = true;
+            message.Body = confirmLink;
+
+            smtpClient.Port = 587;
+            smtpClient.Host = "smtp-mail.outlook.com";
+
+
+            smtpClient.EnableSsl = true;
+            smtpClient.UseDefaultCredentials = false;
+            smtpClient.Credentials = new NetworkCredential("albertookey@outlook.com", "15541554a.");
+            smtpClient.DeliveryMethod = SmtpDeliveryMethod.Network;
+            smtpClient.Send(message);
+            return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+	}
+---------------------------------------------------------------------------------------------------------------------------------------------------
+Gönderilecek epostanın içeriğini değiştirmek için;
+-await _emailSender.SendEmailAsync ile başlayan kodun tamamı aşağıdaki kod ile değiştirilir.
+
+	await SendEmailAsync(Input.Email, "Hesap Doğrulaması",
+	$"Lütfen hesabınızı doğrulamak için buraya <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>Tıkla!</a>.");
