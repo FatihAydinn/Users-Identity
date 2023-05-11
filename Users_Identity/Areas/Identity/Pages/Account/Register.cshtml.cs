@@ -179,7 +179,7 @@ namespace Users_Identity.Areas.Identity.Pages.Account
 
             MailMessage message = new MailMessage();
             SmtpClient smtpClient = new SmtpClient();
-            message.From = new MailAddress("pcprog123@outlook.com");
+            message.From = new MailAddress("EMAIL");
             message.To.Add(email);
             message.Subject = subject;
             message.IsBodyHtml = true;
@@ -191,7 +191,7 @@ namespace Users_Identity.Areas.Identity.Pages.Account
 
             smtpClient.EnableSsl = true;
             smtpClient.UseDefaultCredentials = false;
-            smtpClient.Credentials = new NetworkCredential("pcprog123@outlook.com", "15541554a.");
+            smtpClient.Credentials = new NetworkCredential("EMAIL", "PASSWORD");
             smtpClient.DeliveryMethod = SmtpDeliveryMethod.Network;
             smtpClient.Send(message);
             return true;
