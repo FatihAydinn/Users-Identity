@@ -1,4 +1,4 @@
-# Users Identity with 
+# Users Identity  
 ### Create Account 
 ### Send Email Confirm
 
