@@ -1,5 +1,5 @@
 # Users Identity  
-### User Registration and Login 
+### User Registration and Login/Logout
 ### Send Email Confirm
 
 
