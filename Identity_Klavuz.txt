@@ -124,7 +124,7 @@ Register.cshtml.cs içerisine CreateUser metodunun üzerine eklenecek kod bloğu
 
             MailMessage message = new MailMessage();
             SmtpClient smtpClient = new SmtpClient();
-            message.From = new MailAddress("YOUR_EMAIL");
+            message.From = new MailAddress("EMAIL");
             message.To.Add(email);
             message.Subject = subject;
             message.IsBodyHtml = true;
@@ -136,7 +136,7 @@ Register.cshtml.cs içerisine CreateUser metodunun üzerine eklenecek kod bloğu
 
             smtpClient.EnableSsl = true;
             smtpClient.UseDefaultCredentials = false;
-            smtpClient.Credentials = new NetworkCredential("YOUR_EMAIL", "YOUR_PASS.");
+            smtpClient.Credentials = new NetworkCredential("EMAIL", "PASSWORD");
             smtpClient.DeliveryMethod = SmtpDeliveryMethod.Network;
             smtpClient.Send(message);
             return true;
